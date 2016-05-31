@@ -40,7 +40,16 @@ class App extends Component {
       filteredTasks = filteredTasks.filter(task => !task.checked);
     }
     return filteredTasks.map((task) => {
-      return <Task key={task._id} task={task} />
+      const currentUserId = this.props.currentUser && this.props.currentUser._id;
+      const showPrivateButton = task.owner === currentUserId;
+
+      return (
+        <Task
+          key={task._id}
+          task={task}
+          showPrivateButton={showPrivateButton}
+          />
+      );
     });
   }
 
@@ -62,14 +71,14 @@ class App extends Component {
 
           <AccountsUIWrapper />
           { this.props.currentUser ?
-             <form className="new-task" onSubmit={this.handleSubmit.bind(this)} >
-               <input
-                 type="text"
-                 ref="textInput"
-                 placeholder="Type to add new tasks"
-               />
-             </form> : ''
-           }
+            <form className="new-task" onSubmit={this.handleSubmit.bind(this)} >
+              <input
+                type="text"
+                ref="textInput"
+                placeholder="Type to add new tasks"
+                />
+            </form> : ''
+          }
         </header>
         <ul>
           {this.renderTasks()}
@@ -82,10 +91,13 @@ class App extends Component {
 App.propTypes = {
   tasks: PropTypes.array.isRequired,
   incompleteCount: PropTypes.number.isRequired,
-  currentUser: PropTypes.object
+  currentUser: PropTypes.object,
+  showPrivateButton: PropTypes.bool.isRequired
 };
 
 export default createContainer(() => {
+  Meteor.subscribe('tasks');
+
   return {
     tasks: Tasks.find({}, { sort: { createdAt: -1 } }).fetch(),
     incompleteCount: Tasks.find({ checked: { $ne: true } }).count(),
